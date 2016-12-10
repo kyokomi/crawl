@@ -21,17 +21,25 @@ var charsetTransformMap = map[string]transform.Transformer{
 // Crawler HTML scraping crawler
 type Crawler struct {
 	httpClient *http.Client
+	headers    map[string]string
 }
 
 // New return Crawler
 func New(roundTripper http.RoundTripper) *Crawler {
 	return &Crawler{
 		httpClient: &http.Client{Transport: roundTripper},
+		headers:    map[string]string{},
 	}
 }
 
+// SetHeader scraping request header
+func (c *Crawler) SetHeader(key, value string) {
+	c.headers[key] = value
+}
+
+// HTML scraping html
 func (c *Crawler) HTML(uri string) (io.Reader, error) {
-	body, err := crawlHTML(c.httpClient, uri)
+	body, err := c.crawlHTML(uri)
 	if err != nil {
 		return nil, err
 	}
@@ -40,14 +48,17 @@ func (c *Crawler) HTML(uri string) (io.Reader, error) {
 	return readHTMLWithTransform(body)
 }
 
-func crawlHTML(httpClient *http.Client, linkURL string) (io.ReadCloser, error) {
+func (c *Crawler) crawlHTML(linkURL string) (io.ReadCloser, error) {
 	req, err := http.NewRequest("GET", linkURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Mobile Safari/537.36")
 
-	resp, err := httpClient.Do(req)
+	for k, v := range c.headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
