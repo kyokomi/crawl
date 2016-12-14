@@ -1,7 +1,7 @@
 crawl
 ==============================
 
-html crawler library for go
+libray to crawl html for go
 
 ## Install
 
